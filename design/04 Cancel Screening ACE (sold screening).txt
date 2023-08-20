@@ -1,0 +1,91 @@
+actor Staff
+boundary Alert
+boundary StaffUI
+
+control ManagementSystem
+participant Cinema
+entity Screening (current)
+entity Screening (selected)
+participant ScreeningMapper
+database Database
+Staff->StaffUI:mousePressed(x : Integer, y : Integer)
+activate StaffUI
+
+StaffUI->StaffUI:sn := yToScreen(y : Integer)
+StaffUI->StaffUI:time := xToTime(x : Integer)
+StaffUI->ManagementSystem:selectScreening(sn : String, time : LocalTime)
+activate ManagementSystem
+
+loop for each current Screening
+ManagementSystem->Screening (current):getScreenName()
+ManagementSystem->Screening (current):getTime()
+end
+ManagementSystem->ManagementSystem:notifyObservers()
+activate ManagementSystem
+ManagementSystem->StaffUI:update()
+deactivate ManagementSystem
+
+ManagementSystem-->StaffUI:
+deactivate ManagementSystem
+StaffUI-->Staff:
+deactivate StaffUI
+activate Staff
+Staff->StaffUI:cancelScreening()
+deactivate Staff
+activate StaffUI
+StaffUI->ManagementSystem:cancelSelected()
+activate ManagementSystem
+
+ManagementSystem->ManagementSystem:observerMessage(s : String, true : Boolean)
+activate ManagementSystem
+ManagementSystem->StaffUI:message(message : String, true : Boolean)
+activate StaffUI
+StaffUI->*Alert:Alert( confirmation : AlertType)
+activate Alert
+Alert-->StaffUI:
+deactivate Alert
+
+StaffUI->Alert:showAndWait();
+activate Alert
+Alert->Staff:
+activate Staff
+Staff-->Alert:
+deactivate Staff
+note over Alert:user selects OK
+Alert-->StaffUI:return true
+deactivate Alert
+StaffUI-->ManagementSystem:return true
+deactivate StaffUI
+ManagementSystem-->ManagementSystem:return true
+deactivate ManagementSystem
+
+ManagementSystem->ManagementSystem:checkSold(sg : Screening)
+
+activate ManagementSystem
+note over ManagementSystem:found the screening has been sold
+
+ManagementSystem->ManagementSystem:observerMessage(message : String, false : Boolean)
+activate ManagementSystem
+ManagementSystem->StaffUI:message(message : String, false : Boolean)
+activate StaffUI
+StaffUI->*Alert:Alert( warning : AlertType)
+activate Alert
+Alert-->StaffUI:
+deactivate Alert
+StaffUI->Alert:showAndWait();
+Alert->Staff:
+activate Staff
+Staff-->Alert:
+deactivate Staff
+Alert-->StaffUI:return result
+StaffUI-->ManagementSystem:return false
+deactivate StaffUI
+ManagementSystem-->ManagementSystem:return false
+deactivate ManagementSystem
+ManagementSystem-->ManagementSystem:return false
+deactivate ManagementSystem
+ManagementSystem-->StaffUI:return false
+deactivate ManagementSystem
+StaffUI-->Staff:
+deactivate StaffUI
+

@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<classpath>
+	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
+	<classpathentry kind="src" path="OOD_Cinema_System/src"/>
+	<classpathentry kind="lib" path="OOD_Cinema_System/sqlite-jdbc-3.27.2.1.jar"/>
+	<classpathentry kind="output" path="out/production/Implementation"/>
+</classpath>

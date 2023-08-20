@@ -1,0 +1,101 @@
+actor Staff
+boundary ScreeningDialog
+boundary StaffUI
+
+control ManagementSystem
+participant Cinema
+participant ScreenMapper
+participant MovieMapper
+participant ScreeningMapper
+database Database
+entity s (Screen)
+entity m (Movie)
+entity PersistentScreening
+
+Staff->StaffUI:scheduleScreening()
+activate StaffUI
+
+StaffUI->*ScreeningDialog:ScreeningDialog()
+activate ScreeningDialog
+ScreeningDialog-->StaffUI:
+deactivate ScreeningDialog
+
+StaffUI->ScreeningDialog:showAndWait()
+activate ScreeningDialog
+ScreeningDialog->Staff:
+activate Staff
+Staff-->ScreeningDialog:
+deactivate Staff
+ScreeningDialog->StaffUI:return sgi : ScreeningInfo
+deactivate ScreeningDialog
+
+StaffUI->ManagementSystem:scheduleScreening(date : LocalDate, \ntime : LocalTime, title : String, \nyear : int, screenName : String)
+activate ManagementSystem
+
+expandable- see diagram 03 - Schedule Screening ECE (double screening)
+
+ManagementSystem->ManagementSystem:checkDoubleScreening(time : LocalTime, screenName : String, sg : Screening)
+end 
+
+expandable- see diagrams 03 - Schedule Screening ACE (running time of movie is longer than available time)
+
+	ManagementSystem->ManagementSystem:checkTimeAvailable()                                                                                                                                         
+end 
+
+ManagementSystem->Cinema:scheduleScreening(date : LocalDate, \ntime : LocalTime, title : String, \nyear : int, screenName : String)
+activate Cinema
+
+Cinema->ScreenMapper:getScreen(screenName : String)
+activate ScreenMapper
+ScreenMapper->ScreenMapper:getFromCacheByName(screenName)
+ScreenMapper-->Cinema:return s : Screen
+deactivate ScreenMapper
+
+expandable- [see 03 - getMovie Expanded for details of the getMovie functionality]
+
+Cinema->MovieMapper:m := getMovie(title : String, runningTime : int, year : int)
+end 
+
+
+
+Cinema->ScreeningMapper:scheduleScreening(date : LocalDate, m : Movie, s : Screen, time : LocalTime)
+activate ScreeningMapper
+ScreeningMapper->Database:oid := getId()
+ScreeningMapper->ScreeningMapper:performUpdate(sql : String)
+activate ScreeningMapper
+
+
+ScreeningMapper->Database:execute(sql : String)
+ScreeningMapper-->ScreeningMapper:
+deactivate ScreeningMapper
+
+
+ScreeningMapper->*PersistentScreening:PersistentScreening(oid : Integer,\ndate : LocalDate, m : Movie, \ns : Screen, time : LocalTime)
+activate PersistentScreening
+PersistentScreening-->ScreeningMapper:
+deactivate PersistentScreening
+ScreeningMapper-->Cinema:
+deactivate ScreeningMapper
+Cinema-->ManagementSystem:
+deactivate Cinema
+ManagementSystem->ManagementSystem:notifyObservers()
+activate ManagementSystem
+ManagementSystem->StaffUI:update()
+activate StaffUI
+StaffUI->ManagementSystem:getDate()
+activate ManagementSystem
+ManagementSystem-->StaffUI:return date
+deactivate ManagementSystem
+StaffUI->ManagementSystem:getScreenings()
+activate ManagementSystem
+ManagementSystem-->StaffUI:return screenings
+deactivate ManagementSystem
+StaffUI-->ManagementSystem:
+deactivate StaffUI
+deactivateafter ManagementSystem
+
+
+ManagementSystem-->StaffUI:
+deactivate ManagementSystem
+StaffUI-->Staff:
+deactivate StaffUI
